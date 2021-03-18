@@ -123,7 +123,8 @@ fn main() -> AnyhowResult<()> {
   let multi_device_capturer = MultiDeviceCapturer::new(devices);
 
   thread::spawn(move || {
-    multi_device_capturer.run_capture_loop();
+    multi_device_capturer.run_capture_loop()
+        .expect("Capture thread errored mysteriously");
   });
 
   // ===============================================================
