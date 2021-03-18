@@ -5,6 +5,7 @@
 #[macro_use] extern crate clap;
 
 mod pointcloud;
+mod setup;
 mod zeromq;
 
 use anyhow::Result as AnyhowResult;
@@ -27,6 +28,8 @@ use pointcloud::xy_table::create_xy_table_from_color_calibration;
 use pointcloud::xy_table::create_xy_table_from_depth_calibration;
 use zmq::{Error, Socket, Context, DONTWAIT};
 use crate::zeromq::protocol::{encode_point_data, send_message};
+use crate::setup::open_devices::open_and_configure_camera;
+use crate::setup::camera_info::CameraInfo;
 
 
 const SOCKET_ADDRESS : &'static str = "tcp://127.0.0.1:8888";
@@ -98,39 +101,19 @@ fn main() -> AnyhowResult<()> {
   println!("Opening device...");
   thread::sleep(Duration::from_millis(100));
 
-  let device = Device::open(1)?;
+  let mut cameras: Vec<CameraInfo> = Vec::with_capacity(args.num_cameras as usize);
 
-  let mut config = DeviceConfiguration::init_disable_all();
-
-  let mut camera_fps = k4a_sys::k4a_fps_t_K4A_FRAMES_PER_SECOND_30;
-
-  let depth_mode_fov = if args.wide {
-    // NB: Wide FOV lowers the possible frame rate.
-    camera_fps = k4a_sys::k4a_fps_t_K4A_FRAMES_PER_SECOND_15;
-    k4a_sys::k4a_depth_mode_t_K4A_DEPTH_MODE_WFOV_UNBINNED
-  } else {
-    k4a_sys::k4a_depth_mode_t_K4A_DEPTH_MODE_NFOV_UNBINNED
-  };
-
-  config.0.camera_fps = camera_fps;
-  config.0.depth_mode = depth_mode_fov;
-  config.0.color_format = k4a_sys::k4a_image_format_t_K4A_IMAGE_FORMAT_COLOR_BGRA32;
-
-  config.0.color_resolution = k4a_sys::k4a_color_resolution_t_K4A_COLOR_RESOLUTION_720P; // 1280x721
-  //config.0.color_resolution = k4a_sys::k4a_color_resolution_t_K4A_COLOR_RESOLUTION_1080P; // 1920x1080 (this gets truncated.)
-  //config.0.color_resolution = k4a_sys::k4a_color_resolution_t_K4A_COLOR_RESOLUTION_2160P; // 4K, what the original program did
-
-  let calibration = device.get_calibration(config.0.depth_mode, config.0.color_resolution)?;
-
-  //let xy_table = create_xy_table_from_depth_calibration(&calibration)?;
-  let xy_table = create_xy_table_from_color_calibration(&calibration)?;
-
-  let transformer = DepthTransformer::new(&calibration);
+  for index in 0 .. args.num_cameras {
+    let camera_info = open_and_configure_camera(&args, index as u32)?;
+    cameras.push(camera_info);
+  }
 
   println!("Starting cameras with supplied config...");
   thread::sleep(Duration::from_millis(100));
 
-  device.start_cameras(&config)?;
+  for camera in cameras.iter() {
+    camera.device.start_cameras(&camera.config)?;
+  }
 
   // ===============================================================
 
@@ -151,7 +134,7 @@ fn main() -> AnyhowResult<()> {
 
   println!("Grabbing first frame...");
   loop {
-    let maybe_points = get_point_cloud(&device, &xy_table, color, &transformer, &args);
+    let maybe_points = get_point_cloud(&cameras, color, &args);
     points = match maybe_points {
       Err(e) => {
         println!("Error: {:?}", e);
@@ -171,7 +154,7 @@ fn main() -> AnyhowResult<()> {
       MessagingState::GrabPointCloud => {
         //println!("Grabbing another frame...");
         color = Color::get_time_based_color();
-        points = get_point_cloud(&device, &xy_table, color, &transformer, &args)?;
+        points = get_point_cloud(&cameras, color, &args)?;
 
         messaging_state = MessagingState::Sending_PointDataBegin;
         frame_number += 1;
@@ -219,33 +202,36 @@ fn main() -> AnyhowResult<()> {
 }
 
 fn get_point_cloud(
-  device: &Device,
-  xy_table: &Image,
+  cameras: &Vec<CameraInfo>,
   color: Color,
-  transformer: &DepthTransformer,
   command_args: &CommandArgs
 ) -> AnyhowResult<Vec<Point>>
 {
-  let capture = device.get_capture(5000)?;
+  let mut points = Vec::with_capacity(10000);
 
-  let depth_image = capture.get_depth_image()
-      .ok_or(anyhow!("depth image not present"))?;
+  for camera in cameras.iter() {
+    let capture = camera.device.get_capture(5000)?;
 
-  let color_image = capture.get_color_image()
-      .ok_or(anyhow!("color image not present"))?;
+    let depth_image = capture.get_depth_image()
+        .ok_or(anyhow!("depth image not present"))?;
 
-  let depth_image2 = transformer.transform(&depth_image)?;
+    let color_image = capture.get_color_image()
+        .ok_or(anyhow!("color image not present"))?;
 
-  let mut points =
-      calculate_point_cloud3(
-        &depth_image2,
-        &xy_table,
-        //color,
-        &color_image,
-        command_args,
-      )?;
+    let depth_image2 = camera.transformer.transform(&depth_image)?;
 
-  //println!("Points: {}", points.len());
+    let mut camera_points =
+        calculate_point_cloud3(
+          &depth_image2,
+          &camera.xy_table,
+          //color,
+          &color_image,
+          command_args,
+        )?;
+
+    points.extend(camera_points);
+    //println!("Points: {}", camera_points.len());
+  }
 
   Ok(points)
 }
