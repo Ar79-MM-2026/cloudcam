@@ -4,19 +4,24 @@ use crate::capture::capture_buffer::CaptureBuffer;
 use kinect::{Device, Capture};
 use std::sync::Arc;
 
+// TODO(bt): Move to kinect.rs crate.
 const WAIT_INFINITE : i32 = -1;
 
 pub struct MultiDeviceCapturer {
   devices: Vec<Device>,
   capture_buffer: Arc<CaptureBuffer>,
+  require_color_image: bool,
+  require_depth_image: bool,
 }
 
 impl MultiDeviceCapturer {
 
-  pub fn new(devices: Vec<Device>) -> Self {
+  pub fn new(devices: Vec<Device>, require_depth_image: bool, require_color_image: bool) -> Self {
     Self {
       capture_buffer: Arc::new(CaptureBuffer::new(devices.len())),
       devices,
+      require_color_image,
+      require_depth_image,
     }
   }
 
@@ -44,10 +49,11 @@ impl MultiDeviceCapturer {
     for device in self.devices.iter() {
       let capture = device.get_capture(WAIT_INFINITE)?;
 
-      if capture.get_color_image().is_none() {
+      if self.require_color_image && capture.get_color_image().is_none() {
         return Err(anyhow!("Capture contains no color image"));
       }
-      if capture.get_depth_image().is_none() {
+
+      if self.require_depth_image && capture.get_depth_image().is_none() {
         return Err(anyhow!("Capture contains no depth image"));
       }
 

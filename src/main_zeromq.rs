@@ -120,7 +120,7 @@ fn main() -> AnyhowResult<()> {
     camera_infos.push(camera_info);
   }
 
-  let multi_device_capturer = MultiDeviceCapturer::new(devices);
+  let multi_device_capturer = MultiDeviceCapturer::new(devices, true, true);
 
   thread::spawn(move || {
     multi_device_capturer.run_capture_loop()
