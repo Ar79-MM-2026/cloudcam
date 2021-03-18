@@ -8,6 +8,8 @@ use std::sync::Arc;
 const WAIT_INFINITE : i32 = -1;
 
 pub struct MultiDeviceCapturer {
+  /// Device order matters.
+  /// The capture order will match the device order!
   devices: Vec<Device>,
   capture_buffer: Arc<CaptureBuffer>,
   require_color_image: bool,

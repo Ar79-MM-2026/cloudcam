@@ -5,6 +5,8 @@ use anyhow::anyhow;
 
 pub struct CaptureBuffer {
   num_devices: usize,
+  /// Device order matters.
+  /// The capture order will match the device order!
   captures: Arc<Mutex<Vec<Capture>>>,
 }
 
@@ -33,5 +35,20 @@ impl CaptureBuffer {
     }
 
     Ok(())
+  }
+
+  pub fn get_captures(&self) -> AnyhowResult<Vec<Capture>> {
+    let mut captures = Vec::with_capacity(self.num_devices);
+    match self.captures.lock() {
+      Err(err) => {
+        return Err(anyhow!("Lock error: {:?}", err))
+      },
+      Ok(mut lock) => {
+        for capture in lock.iter() {
+          captures.push(capture.clone());
+        }
+      },
+    }
+    Ok(captures)
   }
 }

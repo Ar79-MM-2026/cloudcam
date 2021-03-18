@@ -34,6 +34,7 @@ use crate::setup::open_devices::open_and_configure_camera;
 use crate::setup::camera_info::CameraInfo;
 use crate::capture::multi_device_capturer::MultiDeviceCapturer;
 use std::sync::{Arc, RwLock};
+use crate::capture::capture_buffer::CaptureBuffer;
 
 
 const SOCKET_ADDRESS : &'static str = "tcp://127.0.0.1:8888";
@@ -122,6 +123,8 @@ fn main() -> AnyhowResult<()> {
 
   let multi_device_capturer = MultiDeviceCapturer::new(devices, true, true);
 
+  let capture_buffer = multi_device_capturer.get_capture_buffer();
+
   thread::spawn(move || {
     multi_device_capturer.run_capture_loop()
         .expect("Capture thread errored mysteriously");
@@ -129,11 +132,6 @@ fn main() -> AnyhowResult<()> {
 
   // ===============================================================
 
-  loop {
-    thread::sleep(Duration::from_millis(5000));
-  }
-
-  /*
   let context = zmq::Context::new();
 
   println!("Connecting ZeroMQ socket...");
@@ -151,7 +149,7 @@ fn main() -> AnyhowResult<()> {
 
   println!("Grabbing first frame...");
   loop {
-    let maybe_points = get_point_cloud(&cameras, color, &args);
+    let maybe_points = get_point_cloud(&capture_buffer, &camera_infos, color, &args);
     points = match maybe_points {
       Err(e) => {
         println!("Error: {:?}", e);
@@ -173,7 +171,7 @@ fn main() -> AnyhowResult<()> {
       MessagingState::GrabPointCloud => {
         //println!("Grabbing another frame...");
         color = Color::get_time_based_color();
-        points = match get_point_cloud(&cameras, color, &args) {
+        points = match get_point_cloud(&capture_buffer, &camera_infos, color, &args) {
           Ok(p) => p,
           Err(e) => {
             thread::sleep(Duration::from_millis(50));
@@ -222,23 +220,29 @@ fn main() -> AnyhowResult<()> {
       },
     }
   }
-  */
 
   Ok(())
 }
 
 fn get_point_cloud(
-  cameras: &Vec<CameraInfo>,
+  capture_buffer: &Arc<CaptureBuffer>,
+  camera_infos: &Vec<CameraInfo>,
   color: Color,
   command_args: &CommandArgs
 ) -> AnyhowResult<Vec<Point>>
 {
   let mut points = Vec::with_capacity(10000);
 
-  /*let mut index = 0;
-  for camera in cameras.iter() {
-    let capture = camera.device.get_capture(5000)?;
+  let mut index = 0;
 
+  let captures = capture_buffer.get_captures()?;
+
+  for it in captures.iter().zip(camera_infos.iter()) {
+    let (capture, camera_info) = it;
+
+    // NB: We should be guaranteed to have color and depth captures at this point,
+    // But we're just going through the rust motions since I didn't create a new
+    // type to guarantee presence.
 
     let depth_image = match capture.get_depth_image() {
       Some(img) => img,
@@ -250,12 +254,12 @@ fn get_point_cloud(
       None => continue,
     };
 
-    let depth_image2 = camera.transformer.transform(&depth_image)?;
+    let depth_image2 = camera_info.transformer.transform(&depth_image)?;
 
     let mut camera_points =
         calculate_point_cloud3(
           &depth_image2,
-          &camera.xy_table,
+          &camera_info.xy_table,
           //color,
           &color_image,
           command_args,
@@ -270,7 +274,7 @@ fn get_point_cloud(
 
   if points.is_empty() {
     return Err(anyhow!("No points captured!"));
-  }*/
+  }
 
   Ok(points)
 }
