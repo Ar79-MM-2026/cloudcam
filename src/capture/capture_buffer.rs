@@ -17,28 +17,19 @@ impl CaptureBuffer {
     }
   }
 
-  pub fn set_captures(&self) -> AnyhowResult<()> {
-    /*if captures.len() != self.num_devices {
+  pub fn set_captures(&self, captures: Vec<Capture>) -> AnyhowResult<()> {
+    if captures.len() != self.num_devices {
       return Err(anyhow!("Number of captures ({}) != number of devices ({})",
         captures.len(), self.num_devices));
-    }*/
+    }
 
-    /*match self.captures.write() {
+    match self.captures.lock() {
       Err(err) => {
         return Err(anyhow!("Lock error: {:?}", err))
       },
-      Ok(mut caps) => {
-        caps.clear();
-        caps.extend(captures);
-      },
-    }*/
-
-    match self.captures.lock() {
       Ok(mut lock) => {
-        //*lock = captures;
-        lock.clear();
+        *lock = captures;
       },
-      Err(_) => {},
     }
 
     Ok(())

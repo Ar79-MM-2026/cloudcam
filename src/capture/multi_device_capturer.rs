@@ -27,7 +27,7 @@ impl MultiDeviceCapturer {
     loop {
       match self.get_synchronized_captures() {
         Ok(captures) => {
-          self.capture_buffer.set_captures();
+          self.capture_buffer.set_captures(captures);
         },
         Err(e) => {
           println!("Error with captures: {:?}", e);
