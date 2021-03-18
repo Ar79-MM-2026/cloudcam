@@ -6,7 +6,7 @@ use crate::pointcloud::cpu_transformation::DepthTransformer;
 use crate::AnyhowResult;
 use k4a_sys_temp as k4a_sys;
 
-pub fn open_and_configure_camera(args: &CommandArgs, index: u32) -> AnyhowResult<CameraInfo>
+pub fn open_and_configure_camera(args: &CommandArgs, index: u32) -> AnyhowResult<(Device, CameraInfo)>
 {
   let device = Device::open(index)?;
 
@@ -37,11 +37,12 @@ pub fn open_and_configure_camera(args: &CommandArgs, index: u32) -> AnyhowResult
 
   let transformer = DepthTransformer::new(&calibration);
 
-  Ok(CameraInfo {
-    device,
+  let camera_info = CameraInfo {
     config,
     calibration,
     xy_table,
     transformer
-  })
+  };
+
+  Ok((device, camera_info))
 }

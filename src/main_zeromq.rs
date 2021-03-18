@@ -1,9 +1,11 @@
 //! Generate random points to send over ZeroMQ to a consumer
 
+#![cfg_attr(debug_assertions, allow(dead_code, unused_imports))]
 #[allow(unused_imports)]
 
 #[macro_use] extern crate clap;
 
+mod capture;
 mod pointcloud;
 mod setup;
 mod zeromq;
@@ -30,6 +32,8 @@ use zmq::{Error, Socket, Context, DONTWAIT};
 use crate::zeromq::protocol::{encode_point_data, send_message};
 use crate::setup::open_devices::open_and_configure_camera;
 use crate::setup::camera_info::CameraInfo;
+use crate::capture::multi_device_capturer::MultiDeviceCapturer;
+use std::sync::{Arc, RwLock};
 
 
 const SOCKET_ADDRESS : &'static str = "tcp://127.0.0.1:8888";
@@ -101,22 +105,34 @@ fn main() -> AnyhowResult<()> {
   println!("Opening device...");
   thread::sleep(Duration::from_millis(100));
 
-  let mut cameras: Vec<CameraInfo> = Vec::with_capacity(args.num_cameras as usize);
-
-  for index in 0 .. args.num_cameras {
-    let camera_info = open_and_configure_camera(&args, index as u32)?;
-    cameras.push(camera_info);
-  }
+  let mut devices = Vec::with_capacity(args.num_cameras as usize);
+  let mut camera_infos: Vec<CameraInfo> = Vec::with_capacity(args.num_cameras as usize);
 
   println!("Starting cameras with supplied config...");
-  thread::sleep(Duration::from_millis(100));
+  for index in 0 .. args.num_cameras {
+    thread::sleep(Duration::from_millis(100));
 
-  for camera in cameras.iter() {
-    camera.device.start_cameras(&camera.config)?;
+    let (device, camera_info) = open_and_configure_camera(&args, index as u32)?;
+
+    device.start_cameras(&camera_info.config)?;
+
+    devices.push(device);
+    camera_infos.push(camera_info);
   }
+
+  let multi_device_capturer = MultiDeviceCapturer::new(devices);
+
+  thread::spawn(move || {
+    multi_device_capturer.run_capture_loop();
+  });
 
   // ===============================================================
 
+  loop {
+    thread::sleep(Duration::from_millis(5000));
+  }
+
+  /*
   let context = zmq::Context::new();
 
   println!("Connecting ZeroMQ socket...");
@@ -146,6 +162,8 @@ fn main() -> AnyhowResult<()> {
     break;
   };
 
+  println!("Main loop begin...");
+
   let mut packet_number = 0;
   let mut frame_number : u64 = 0;
 
@@ -154,7 +172,13 @@ fn main() -> AnyhowResult<()> {
       MessagingState::GrabPointCloud => {
         //println!("Grabbing another frame...");
         color = Color::get_time_based_color();
-        points = get_point_cloud(&cameras, color, &args)?;
+        points = match get_point_cloud(&cameras, color, &args) {
+          Ok(p) => p,
+          Err(e) => {
+            thread::sleep(Duration::from_millis(50));
+            continue
+          },
+        };
 
         messaging_state = MessagingState::Sending_PointDataBegin;
         frame_number += 1;
@@ -197,6 +221,7 @@ fn main() -> AnyhowResult<()> {
       },
     }
   }
+  */
 
   Ok(())
 }
@@ -209,14 +234,20 @@ fn get_point_cloud(
 {
   let mut points = Vec::with_capacity(10000);
 
+  /*let mut index = 0;
   for camera in cameras.iter() {
     let capture = camera.device.get_capture(5000)?;
 
-    let depth_image = capture.get_depth_image()
-        .ok_or(anyhow!("depth image not present"))?;
 
-    let color_image = capture.get_color_image()
-        .ok_or(anyhow!("color image not present"))?;
+    let depth_image = match capture.get_depth_image() {
+      Some(img) => img,
+      None => continue,
+    };
+
+    let color_image = match capture.get_color_image() {
+      Some(img) => img,
+      None => continue,
+    };
 
     let depth_image2 = camera.transformer.transform(&depth_image)?;
 
@@ -229,9 +260,16 @@ fn get_point_cloud(
           command_args,
         )?;
 
+    //camera_points.truncate(6000);
+
+    println!("Points (camera {}): {}", index, camera_points.len());
     points.extend(camera_points);
-    //println!("Points: {}", camera_points.len());
+    index += 1;
   }
+
+  if points.is_empty() {
+    return Err(anyhow!("No points captured!"));
+  }*/
 
   Ok(points)
 }
