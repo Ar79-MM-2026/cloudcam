@@ -5,6 +5,7 @@ use crate::pointcloud::xy_table::create_xy_table_from_color_calibration;
 use crate::pointcloud::cpu_transformation::DepthTransformer;
 use crate::AnyhowResult;
 use k4a_sys_temp as k4a_sys;
+use crate::calibration::world_calibration::WorldCalibration;
 
 pub fn open_and_configure_camera(args: &CommandArgs, index: u32) -> AnyhowResult<(Device, CameraInfo)>
 {
@@ -37,11 +38,15 @@ pub fn open_and_configure_camera(args: &CommandArgs, index: u32) -> AnyhowResult
 
   let transformer = DepthTransformer::new(&calibration);
 
+  println!("Loading world calibration...");
+  let world_calibration = WorldCalibration::load_from_file_and_device(&device)?;
+
   let camera_info = CameraInfo {
     config,
     calibration,
     xy_table,
-    transformer
+    transformer,
+    world_calibration,
   };
 
   Ok((device, camera_info))

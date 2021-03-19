@@ -9,6 +9,22 @@ use std::io::{BufReader, BufRead};
 /// LiveScan3D can be used to derive calibration files.
 /// https://github.com/storytold/LiveScan3D
 pub struct WorldCalibration {
+  pub translation_x: f32,
+  pub translation_y: f32,
+  pub translation_z: f32,
+
+  // TODO(bt): Use a linear algebra package
+  pub rotation_0_x: f32,
+  pub rotation_0_y: f32,
+  pub rotation_0_z: f32,
+
+  pub rotation_1_x: f32,
+  pub rotation_1_y: f32,
+  pub rotation_1_z: f32,
+
+  pub rotation_2_x: f32,
+  pub rotation_2_y: f32,
+  pub rotation_2_z: f32,
 }
 
 impl WorldCalibration {
@@ -24,25 +40,40 @@ impl WorldCalibration {
     let mut string_buffer = String::new();
     reader.read_line(&mut string_buffer)?;
 
-    let mut x = 0.0f32;
-    let mut y = 0.0f32;
-    let mut z = 0.0f32;
+    let mut translation_x = 0.0f32;
+    let mut translation_y = 0.0f32;
+    let mut translation_z = 0.0f32;
 
     if let Some(captures) = translation_regex.captures(&string_buffer) {
       if captures.len() == 4 {
-        x = captures[1].parse()?;
-        y = captures[2].parse()?;
-        z = captures[3].parse()?;
+        translation_x = captures[1].parse()?;
+        translation_y = captures[2].parse()?;
+        translation_z = captures[3].parse()?;
       }
     }
 
-    println!("x: {}", x);
-    println!("y: {}", y);
-    println!("z: {}", z);
+    println!("x: {}", translation_x);
+    println!("y: {}", translation_y);
+    println!("z: {}", translation_z);
 
     let rotation_regex : Regex = Regex::new(r"^(\-?\d\.\d+)(\-?\d\.\d+)(\-?\d\.\d+)\s*$")?;
 
-    for _i in 0..3 {
+
+    let mut rotation_0_x = 0.0f32;
+    let mut rotation_0_y = 0.0f32;
+    let mut rotation_0_z = 0.0f32;
+    let mut rotation_1_x = 0.0f32;
+    let mut rotation_1_y = 0.0f32;
+    let mut rotation_1_z = 0.0f32;
+    let mut rotation_2_x = 0.0f32;
+    let mut rotation_2_y = 0.0f32;
+    let mut rotation_2_z = 0.0f32;
+
+    for i in 0..3 {
+      let mut x = 0.0f32;
+      let mut y = 0.0f32;
+      let mut z = 0.0f32;
+
       let mut string_buffer = String::new();
       reader.read_line(&mut string_buffer)?;
 
@@ -54,21 +85,58 @@ impl WorldCalibration {
         }
       }
 
+      match i {
+        0 => {
+          rotation_0_x = x;
+          rotation_0_y = y;
+          rotation_0_z = z;
+        },
+        1 => {
+          rotation_1_x = x;
+          rotation_1_y = y;
+          rotation_1_z = z;
+        },
+        2 => {
+          rotation_2_x = x;
+          rotation_2_y = y;
+          rotation_2_z = z;
+        },
+        _ => {},
+      }
+
       println!("x: {}", x);
       println!("y: {}", y);
       println!("z: {}", z);
       println!("");
     }
 
-
-
     Ok(Self {
+      translation_x,
+      translation_y,
+      translation_z,
+      rotation_0_x,
+      rotation_0_y,
+      rotation_0_z,
+      rotation_1_x,
+      rotation_1_y,
+      rotation_1_z,
+      rotation_2_x,
+      rotation_2_y,
+      rotation_2_z,
     })
   }
 
   pub fn load_from_file_and_device(device: &Device) -> AnyhowResult<Self> {
     let serial_number = device.get_serial_number()?;
     Self::load_from_file_and_serial(&serial_number)
+  }
+
+  pub fn rotate_point(&self, x: f32, y: f32, z: f32) -> (f32, f32, f32) {
+    let x0 = x * self.rotation_0_x + y * self.rotation_0_y + z * self.rotation_0_z;
+    let y0 = x * self.rotation_1_x + y * self.rotation_1_y + z * self.rotation_1_z;
+    let z0 = x * self.rotation_1_x + y * self.rotation_1_y + z * self.rotation_1_z;
+
+    (x0, y0, z0)
   }
 }
 

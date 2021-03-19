@@ -117,19 +117,11 @@ fn main() -> AnyhowResult<()> {
     println!("Opening camera {}...", index);
     let (device, camera_info) = open_and_configure_camera(&args, index as u32)?;
 
-    println!("Loading world calibration...");
-    let world_calibration = WorldCalibration::load_from_file_and_device(&device)?;
-
-
     println!("Starting camera {}...", index);
     device.start_cameras(&camera_info.config)?;
 
     devices.push(device);
     camera_infos.push(camera_info);
-  }
-
-  if true {
-    return Ok(());
   }
 
   let multi_device_capturer = MultiDeviceCapturer::new(devices, true, true);
@@ -271,6 +263,7 @@ fn get_point_cloud(
         calculate_point_cloud3(
           &depth_image2,
           &camera_info.xy_table,
+          Some(&camera_info.world_calibration),
           //color,
           &color_image,
           command_args,

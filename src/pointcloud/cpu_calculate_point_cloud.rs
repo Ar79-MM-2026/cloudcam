@@ -8,6 +8,7 @@ use kinect::Image;
 use kinect::ImageFormat;
 use num_traits::Float;
 use std::mem::size_of;
+use crate::calibration::world_calibration::WorldCalibration;
 
 pub struct PointCloudResult {
     pub point_cloud_image: Image,
@@ -107,6 +108,7 @@ struct ColorCameraPoint {
 pub fn calculate_point_cloud3(
     depth_image: &Image,
     xy_table_image: &Image,
+    maybe_world_calibration: Option<&WorldCalibration>,
     color_image: &Image,
     command_args: &CommandArgs
 ) -> AnyhowResult<Vec<Point>>
@@ -146,6 +148,18 @@ pub fn calculate_point_cloud3(
                 let mut x = x_lut * ((*depth_data.offset(i)) as f32);
                 let mut y = y_lut * ((*depth_data.offset(i)) as f32);
                 let mut z = (*depth_data.offset(i)) as f32;
+
+                if let Some(world_calibration) = maybe_world_calibration {
+                    x += world_calibration.translation_x;
+                    y += world_calibration.translation_y;
+                    z += world_calibration.translation_z;
+
+                    let (x2, y2, z2) = world_calibration.rotate_point(x, y, z);
+
+                    x = x2;
+                    y = y2;
+                    z = z2;
+                }
 
                 let color = (*color_data.offset(i)) as ColorCameraPoint;
 
