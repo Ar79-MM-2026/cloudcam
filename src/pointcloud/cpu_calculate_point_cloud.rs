@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Error};
 use crate::AnyhowResult;
 use crate::CommandArgs;
 use crate::pointcloud::color::Color;
@@ -9,6 +9,7 @@ use kinect::ImageFormat;
 use num_traits::Float;
 use std::mem::size_of;
 use crate::calibration::world_calibration::WorldCalibration;
+use crate::calibration::resize::resize_image;
 
 pub struct PointCloudResult {
     pub point_cloud_image: Image,
@@ -115,6 +116,19 @@ pub fn calculate_point_cloud3(
 {
     let width = depth_image.get_width_pixels();
     let height = depth_image.get_height_pixels();
+
+    let color_image = resize_image(
+        &color_image,
+        color_image.get_width_pixels(),
+        color_image.get_height_pixels()).unwrap();
+
+    /*match res {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Error resizing image: {}", e);
+        }
+    }*/
+
 
     {
         let xy_width = xy_table_image.get_width_pixels();

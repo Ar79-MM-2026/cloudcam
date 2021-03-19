@@ -4,6 +4,7 @@ use resize::Type::{Lanczos3, Triangle};
 //use resize::Pixel::RGB8;
 use resize::Pixel;
 use std::ptr;
+use rgb::FromSlice;
 
 pub fn resize_image(image: &Image, dest_width: usize, dest_height: usize) -> AnyhowResult<Image> {
 
@@ -47,7 +48,7 @@ pub fn resize_image(image: &Image, dest_width: usize, dest_height: usize) -> Any
     image.get_format(),
     dest_width as u32,
     dest_height as u32,
-    stride_bytes as u32)?;
+    stride_bytes as u32).unwrap();
 
   // Destination buffer. Must be mutable.
   //let mut dst = vec![RGB::new(0,0,0); dst_width * dst_height];
@@ -56,14 +57,24 @@ pub fn resize_image(image: &Image, dest_width: usize, dest_height: usize) -> Any
 
   let mut dst = dest_image.get_buffer();
 
-  let mut dst_slice = unsafe { std::slice::from_raw_parts_mut(dst, dest_width * dest_height) };
+  let mut dst_slice = unsafe { std::slice::from_raw_parts_mut(dst, dest_width * dest_height * 3) };
 
 
   //let mut resizer = resize::new(src_width, src_height, dest_width, dest_height, RGB8, Lanczos3)?;
   //resizer.resize(&src.as_rgb(), &dst.as_rgb_mut())?;
 
-  resize::new(src_width, src_height, dest_width, dest_height, Pixel::RGB24, Triangle)?
-      .resize(&src, &mut dst_slice)?;
+  /*// OLD VERSION -- WORKS
+  resize::new(src_width, src_height, dest_width, dest_height, Pixel::RGB24, Triangle)
+      .unwrap()
+      .resize(&src, &mut dst_slice)
+      .unwrap();*/
+
+  let mut resizer = resize::new(src_width, src_height, dest_width, dest_height, Pixel::RGB8, Triangle)
+      .unwrap();
+
+  resizer.resize(src.as_rgb(), dst_slice.as_rgb_mut())
+      .unwrap();
+
 
   /*resize::new(src_width, src_height, dest_width, dest_height, Pixel::RGB8, Lanczos3)
       .unwrap()

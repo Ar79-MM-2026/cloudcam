@@ -24,5 +24,6 @@ num-traits = "0.2.14"
 #opencv = "0.49.1"
 rand = "0.7.3"
 regex = "1.4.5"
-resize = "0.6.2"
+resize = "0.7.0"
+rgb = "0.8.24"
 zmq = { version = "0.9", features = ['vendored'] }
