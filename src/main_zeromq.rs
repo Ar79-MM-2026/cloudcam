@@ -37,6 +37,7 @@ use crate::capture::multi_device_capturer::MultiDeviceCapturer;
 use std::sync::{Arc, RwLock};
 use crate::capture::capture_buffer::CaptureBuffer;
 use crate::calibration::world_calibration::WorldCalibration;
+use crate::calibration::resize::resize_image;
 
 
 const SOCKET_ADDRESS : &'static str = "tcp://127.0.0.1:8888";
@@ -259,15 +260,44 @@ fn get_point_cloud(
 
     let depth_image2 = camera_info.transformer.transform(&depth_image)?;
 
+
+    // ==================== LIVESCAN-INSPIRED SCALING =======================
+
+    let depth_image_livescan = camera_info.color_downscale_info.depth_transformer.transform(
+      &depth_image
+    )?;
+
+    let color_image_livescan = resize_image(
+      &color_image,
+      camera_info.color_downscale_info.color_image_downscaled_width as usize,
+      camera_info.color_downscale_info.color_image_downscaled_height as usize
+    )?;
+
+    // ===========================================
+
+    let mut camera_points =
+        calculate_point_cloud3(
+          &depth_image_livescan,
+          &camera_info.xy_table_livescan,
+          Some(&camera_info.world_calibration),
+          //None,
+          &color_image_livescan,
+          command_args,
+          &camera_info.color_downscale_info,
+        )?;
+
+    /*
+    // Original (non-livescan) algorithm:
     let mut camera_points =
         calculate_point_cloud3(
           &depth_image2,
           &camera_info.xy_table,
-          Some(&camera_info.world_calibration),
-          //None,
+          //Some(&camera_info.world_calibration),
+          None,
           &color_image,
           command_args,
-        )?;
+          &camera_info.color_downscale_info,
+        )?;*/
 
     //camera_points.truncate(6000);
 

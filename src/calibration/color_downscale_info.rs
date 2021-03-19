@@ -1,9 +1,12 @@
 use kinect::{Calibration, Transformation};
+use crate::pointcloud::cpu_transformation::DepthTransformer;
 
 pub struct ColorDownscaleInfo {
   pub color_image_downscaled_height: i32,
   pub color_image_downscaled_width: i32,
+  pub calibration_color_downscaled: Calibration, // NB: Only exposed because other parts need it
   pub transformation_color_downscaled: Transformation,
+  pub depth_transformer: DepthTransformer,
 }
 
 impl ColorDownscaleInfo {
@@ -69,10 +72,14 @@ impl ColorDownscaleInfo {
 
     let transformation_color_downscaled = Transformation::from_calibration(&calibration_color_downscaled);
 
+    let depth_transformer = DepthTransformer::new(&calibration_color_downscaled);
+
     Self {
       color_image_downscaled_height,
       color_image_downscaled_width,
+      calibration_color_downscaled,
       transformation_color_downscaled,
+      depth_transformer,
     }
   }
 }

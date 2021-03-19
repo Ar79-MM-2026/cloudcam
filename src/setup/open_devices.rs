@@ -44,6 +44,7 @@ pub fn open_and_configure_camera(args: &CommandArgs, index: u32) -> AnyhowResult
 
   let color_downscale_info = ColorDownscaleInfo::get_calibration_color_downscaled(&calibration);
 
+  let xy_table_livescan  = create_xy_table_from_color_calibration(&color_downscale_info.calibration_color_downscaled)?;
   /*
 
 void AzureKinectCapture::UpdateDepthPointCloudForColorFrame()
@@ -64,6 +65,7 @@ void AzureKinectCapture::UpdateDepthPointCloud()
     transformer,
     world_calibration,
     color_downscale_info,
+    xy_table_livescan,
   };
 
   Ok((device, camera_info))

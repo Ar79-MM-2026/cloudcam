@@ -10,6 +10,7 @@ use num_traits::Float;
 use std::mem::size_of;
 use crate::calibration::world_calibration::WorldCalibration;
 use crate::calibration::resize::resize_image;
+use crate::calibration::color_downscale_info::ColorDownscaleInfo;
 
 pub struct PointCloudResult {
     pub point_cloud_image: Image,
@@ -111,16 +112,12 @@ pub fn calculate_point_cloud3(
     xy_table_image: &Image,
     maybe_world_calibration: Option<&WorldCalibration>,
     color_image: &Image,
-    command_args: &CommandArgs
+    command_args: &CommandArgs,
+    color_downscale_info: &ColorDownscaleInfo
 ) -> AnyhowResult<Vec<Point>>
 {
     let width = depth_image.get_width_pixels();
     let height = depth_image.get_height_pixels();
-
-    let color_image = resize_image(
-        &color_image,
-        color_image.get_width_pixels(),
-        color_image.get_height_pixels()).unwrap();
 
     /*match res {
         Ok(_) => {}

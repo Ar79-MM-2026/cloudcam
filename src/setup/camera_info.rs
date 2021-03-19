@@ -11,4 +11,5 @@ pub struct CameraInfo {
   pub transformer: DepthTransformer,
   pub world_calibration: WorldCalibration,
   pub color_downscale_info: ColorDownscaleInfo,
+  pub xy_table_livescan: Image,
 }
