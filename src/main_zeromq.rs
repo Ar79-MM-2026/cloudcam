@@ -113,8 +113,10 @@ fn main() -> AnyhowResult<()> {
   for index in 0 .. args.num_cameras {
     thread::sleep(Duration::from_millis(100));
 
+    println!("Opening camera {}...", index);
     let (device, camera_info) = open_and_configure_camera(&args, index as u32)?;
 
+    println!("Starting camera {}...", index);
     device.start_cameras(&camera_info.config)?;
 
     devices.push(device);
