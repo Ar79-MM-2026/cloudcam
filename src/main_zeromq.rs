@@ -264,7 +264,7 @@ fn get_point_cloud(
           &depth_image2,
           &camera_info.xy_table,
           Some(&camera_info.world_calibration),
-          //color,
+          //None,
           &color_image,
           command_args,
         )?;

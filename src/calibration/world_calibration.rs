@@ -134,7 +134,7 @@ impl WorldCalibration {
   pub fn rotate_point(&self, x: f32, y: f32, z: f32) -> (f32, f32, f32) {
     let x0 = x * self.rotation_0_x + y * self.rotation_0_y + z * self.rotation_0_z;
     let y0 = x * self.rotation_1_x + y * self.rotation_1_y + z * self.rotation_1_z;
-    let z0 = x * self.rotation_1_x + y * self.rotation_1_y + z * self.rotation_1_z;
+    let z0 = x * self.rotation_2_x + y * self.rotation_2_y + z * self.rotation_2_z;
 
     (x0, y0, z0)
   }
