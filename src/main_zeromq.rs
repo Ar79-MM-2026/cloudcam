@@ -267,15 +267,15 @@ fn get_point_cloud(
       &depth_image
     )?;
 
-    let color_image_livescan = resize_image(
+    /*let color_image_livescan = resize_image(
       &color_image,
       camera_info.color_downscale_info.color_image_downscaled_width as usize,
       camera_info.color_downscale_info.color_image_downscaled_height as usize
-    )?;
+    )?;*/
 
     // ===========================================
 
-    let mut camera_points =
+    /*let mut camera_points =
         calculate_point_cloud3(
           &depth_image_livescan,
           &camera_info.xy_table_livescan,
@@ -284,9 +284,8 @@ fn get_point_cloud(
           &color_image_livescan,
           command_args,
           &camera_info.color_downscale_info,
-        )?;
+        )?;*/
 
-    /*
     // Original (non-livescan) algorithm:
     let mut camera_points =
         calculate_point_cloud3(
@@ -297,7 +296,7 @@ fn get_point_cloud(
           &color_image,
           command_args,
           &camera_info.color_downscale_info,
-        )?;*/
+        )?;
 
     //camera_points.truncate(6000);
 

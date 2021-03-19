@@ -49,6 +49,10 @@ impl WorldCalibration {
         translation_x = captures[1].parse()?;
         translation_y = captures[2].parse()?;
         translation_z = captures[3].parse()?;
+
+        translation_x /= 1000.0;
+        translation_y /= 1000.0;
+        translation_z /= 1000.0;
       }
     }
 
@@ -182,4 +186,27 @@ Point3f RotatePoint(Point3f &point, std::vector<std::vector<float>> &R)
 			AllVertices[vertexIndex] = temp;
 			goodVerticesCount++;
 		}
+ */
+
+
+// =============================== Hmm..... ====================================
+
+/*
+
+void AzureKinectCapture::MapDepthFrameToCameraSpace(Point3f *pCameraSpacePoints)
+{
+	UpdateDepthPointCloud();
+
+	int16_t* pointCloudData = (int16_t*)k4a_image_get_buffer(pointCloudImage);
+
+	for (int i = 0; i < nDepthFrameHeight; i++)
+	{
+		for (int j = 0; j < nDepthFrameWidth; j++)
+		{
+			pCameraSpacePoints[j + i * nDepthFrameWidth].X = pointCloudData[3 * (j + i * nDepthFrameWidth) + 0] / 1000.0f;
+			pCameraSpacePoints[j + i * nDepthFrameWidth].Y = pointCloudData[3 * (j + i * nDepthFrameWidth) + 1] / 1000.0f;
+			pCameraSpacePoints[j + i * nDepthFrameWidth].Z = pointCloudData[3 * (j + i * nDepthFrameWidth) + 2] / 1000.0f;
+		}
+	}
+}
  */
