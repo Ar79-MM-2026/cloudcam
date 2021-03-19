@@ -5,7 +5,7 @@ use resize::Type::{Lanczos3, Triangle};
 use resize::Pixel;
 use std::ptr;
 
-pub fn resize_image(image: &Image, dest_width: usize, dest_height: usize) -> AnyhowResult<()> {
+pub fn resize_image(image: &Image, dest_width: usize, dest_height: usize) -> AnyhowResult<Image> {
 
   /*
   //We need to resize the color image, so that it's height fits the depth camera height, while preserving the aspect ratio of the color camera:
@@ -41,23 +41,36 @@ pub fn resize_image(image: &Image, dest_width: usize, dest_height: usize) -> Any
     ptr::copy_nonoverlapping(buffer, vec_ptr, size_bytes);
   }
 
+  // cImg.cols * 4 * (int)sizeof(uint8_t)
+  let stride_bytes = dest_width * 4;
+  let dest_image = Image::create(
+    image.get_format(),
+    dest_width as u32,
+    dest_height as u32,
+    stride_bytes as u32)?;
 
   // Destination buffer. Must be mutable.
   //let mut dst = vec![RGB::new(0,0,0); dst_width * dst_height];
-  let mut dst = vec![0u8; dest_width * dest_height * 3];
+  //let mut dst = vec![0u8; dest_width * dest_height * 3];
   //let mut dst = vec![0u8; w2 * h2 * info.color_type.samples()];
+
+  let mut dst = dest_image.get_buffer();
+
+  let mut dst_slice = unsafe { std::slice::from_raw_parts_mut(dst, dest_width * dest_height) };
+
 
   //let mut resizer = resize::new(src_width, src_height, dest_width, dest_height, RGB8, Lanczos3)?;
   //resizer.resize(&src.as_rgb(), &dst.as_rgb_mut())?;
 
-  resize::new(src_width, src_height, dest_width, dest_height, Pixel::RGB24, Triangle).unwrap().resize(&src, &mut dst).unwrap();
+  resize::new(src_width, src_height, dest_width, dest_height, Pixel::RGB24, Triangle)?
+      .resize(&src, &mut dst_slice)?;
 
   /*resize::new(src_width, src_height, dest_width, dest_height, Pixel::RGB8, Lanczos3)
       .unwrap()
       .resize(&src[..].as_rgb(), &mut dst[..].as_rgb_mut())
       .unwrap();*/
 
-  Ok(())
-
+  Ok(dest_image)
 }
+
 
