@@ -5,6 +5,7 @@
 
 #[macro_use] extern crate clap;
 
+mod calibration;
 mod capture;
 mod pointcloud;
 mod setup;
@@ -35,6 +36,7 @@ use crate::setup::camera_info::CameraInfo;
 use crate::capture::multi_device_capturer::MultiDeviceCapturer;
 use std::sync::{Arc, RwLock};
 use crate::capture::capture_buffer::CaptureBuffer;
+use crate::calibration::world_calibration::WorldCalibration;
 
 
 const SOCKET_ADDRESS : &'static str = "tcp://127.0.0.1:8888";
@@ -103,7 +105,6 @@ fn main() -> AnyhowResult<()> {
 
   println!("Command args: {:?}", args);
 
-  println!("Opening device...");
   thread::sleep(Duration::from_millis(100));
 
   let mut devices = Vec::with_capacity(args.num_cameras as usize);
@@ -116,11 +117,19 @@ fn main() -> AnyhowResult<()> {
     println!("Opening camera {}...", index);
     let (device, camera_info) = open_and_configure_camera(&args, index as u32)?;
 
+    println!("Loading world calibration...");
+    let world_calibration = WorldCalibration::load_from_file_and_device(&device)?;
+
+
     println!("Starting camera {}...", index);
     device.start_cameras(&camera_info.config)?;
 
     devices.push(device);
     camera_infos.push(camera_info);
+  }
+
+  if true {
+    return Ok(());
   }
 
   let multi_device_capturer = MultiDeviceCapturer::new(devices, true, true);

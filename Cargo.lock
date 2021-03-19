@@ -183,6 +183,7 @@ dependencies = [
  "log",
  "num-traits",
  "rand",
+ "regex",
  "zmq",
 ]
 
@@ -285,9 +286,9 @@ dependencies = [
 
 [[package]]
 name = "kinect"
-version = "0.0.5"
+version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f185ce99cfd26fb71672096f68709eabc8a20d20f42fece762fe7dd104b4fc40"
+checksum = "2affa8771deffa9526caf8798ddb4febe68ceca7fa8a6a6779dfff7e28936b4d"
 dependencies = [
  "k4a-sys-temp",
 ]
@@ -480,14 +481,13 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.4.3"
+version = "1.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9251239e129e16308e70d853559389de218ac275b515068abc96829d05b948a"
+checksum = "957056ecddbeba1b26965114e191d2e8589ce74db242b6ea25fc4062427a5c19"
 dependencies = [
  "aho-corasick",
  "memchr",
  "regex-syntax",
- "thread_local",
 ]
 
 [[package]]
@@ -556,15 +556,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "203008d98caf094106cfaba70acfed15e18ed3ddb7d94e49baec153a2b462789"
 dependencies = [
  "unicode-width",
-]
-
-[[package]]
-name = "thread_local"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb9bc092d0d51e76b2b19d9d85534ffc9ec2db959a2523cdae0697e2972cd447"
-dependencies = [
- "lazy_static",
 ]
 
 [[package]]

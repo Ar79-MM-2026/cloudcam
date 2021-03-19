@@ -17,9 +17,10 @@ clap = "3.0.0-beta.1"
 env_logger = "0.7.1"
 k4a-sys-temp = "0.2.3"
 #kinect = { path = "../kinect.rs" }
-kinect = "0.0.5"
+kinect = "0.0.6"
 libc = "0.2.68"
 log = "0.4.11"
 num-traits = "0.2.14"
 rand = "0.7.3"
+regex = "1.4.5"
 zmq = { version = "0.9", features = ['vendored'] }
