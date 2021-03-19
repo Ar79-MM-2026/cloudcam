@@ -43,7 +43,16 @@ pub fn open_and_configure_camera(args: &CommandArgs, index: u32) -> AnyhowResult
   let world_calibration = WorldCalibration::load_from_file_and_device(&device)?;
 
   let color_downscale_info = ColorDownscaleInfo::get_calibration_color_downscaled(&calibration);
+
   /*
+
+void AzureKinectCapture::UpdateDepthPointCloudForColorFrame()
+	k4a_transformation_depth_image_to_color_camera(transformationColorDownscaled, depthImage, transformedDepthImage);
+	k4a_transformation_depth_image_to_point_cloud(transformationColorDownscaled, transformedDepthImage, K4A_CALIBRATION_TYPE_COLOR, pointCloudImage);
+
+
+void AzureKinectCapture::UpdateDepthPointCloud()
+	k4a_transformation_depth_image_to_point_cloud(transformation, depthImage, K4A_CALIBRATION_TYPE_DEPTH, pointCloudImage);
 
    */
 
